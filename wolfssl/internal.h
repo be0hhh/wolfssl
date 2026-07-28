@@ -5998,7 +5998,7 @@ typedef struct BuildMsgArgs {
     typedef struct WriteDup {
         wolfSSL_Mutex   dupMutex;       /* field access mutex */
         int             dupCount;       /* reference count */
-        int             dupErr;         /* under dupMutex, pass to other side */
+        int             dupErr;         /* pass fatal state to write side */
 #ifdef WOLFSSL_DTLS13
         struct Dtls13RecordNumber* sendAckList; /* ownership transferred */
         /* Key update ACK tracking: write side stores the (epoch, seq) of its
@@ -6032,12 +6032,41 @@ typedef struct BuildMsgArgs {
 #ifdef WOLFSSL_TLS13
         /* TLS 1.3 (and DTLS 1.3): read side received a KeyUpdate(update_requested)
          * but cannot send the response; write side handles it. */
+#ifdef WOLFSSL_CXET_HFT
+        byte keyUpdateRespond;          /* atomic CXET read-to-write mailbox */
+#else
         WC_BITFIELD keyUpdateRespond:1; /* write side must send a KeyUpdate response */
+#endif
 #ifdef WOLFSSL_POST_HANDSHAKE_AUTH
         WC_BITFIELD postHandshakeAuthPending:1; /* write side must respond */
 #endif /* WOLFSSL_POST_HANDSHAKE_AUTH */
 #endif /* WOLFSSL_TLS13 */
     } WriteDup;
+
+#ifdef WOLFSSL_CXET_HFT
+    static WC_INLINE int WriteDupLoadError(const WriteDup* state)
+    {
+        return __atomic_load_n(&state->dupErr, __ATOMIC_ACQUIRE);
+    }
+
+    static WC_INLINE void WriteDupStoreError(WriteDup* state, int error)
+    {
+        __atomic_store_n(&state->dupErr, error, __ATOMIC_RELEASE);
+    }
+
+#ifdef WOLFSSL_TLS13
+    static WC_INLINE byte WriteDupTakeKeyUpdate(WriteDup* state)
+    {
+        return __atomic_exchange_n(&state->keyUpdateRespond, 0,
+            __ATOMIC_ACQ_REL);
+    }
+
+    static WC_INLINE void WriteDupPostKeyUpdate(WriteDup* state)
+    {
+        __atomic_store_n(&state->keyUpdateRespond, 1, __ATOMIC_RELEASE);
+    }
+#endif /* WOLFSSL_TLS13 */
+#endif /* WOLFSSL_CXET_HFT */
 
     WOLFSSL_LOCAL void FreeWriteDup(WOLFSSL* ssl);
     WOLFSSL_LOCAL int  NotifyWriteSide(WOLFSSL* ssl, int err);
