@@ -30,9 +30,9 @@ cmake -S . -B build-cxet \
   -DWOLFSSL_QUIC=no
 ```
 
-At runtime, CXET checks `wolfSSL_CXET_hft_profile_version()` against
-`WOLFSSL_CXET_HFT_PROFILE_VERSION`. A zero return means the fork was built
-without the profile.
+The profile build exports `wolfSSL_CXET_hft_profile_version()` and defines
+`WOLFSSL_CXET_HFT` in generated `wolfssl/options.h`. CXET's build/staging gates
+require both markers and reject a profile-off or stale shared library.
 
 This profile is a latency candidate until the CXET end-to-end transport gates
 have been run. The source change alone is not evidence of an improvement.

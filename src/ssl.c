@@ -6279,14 +6279,12 @@ const char* wolfSSL_lib_version(void)
     return LIBWOLFSSL_VERSION_STRING;
 }
 
+#ifdef WOLFSSL_CXET_HFT
 unsigned int wolfSSL_CXET_hft_profile_version(void)
 {
-#ifdef WOLFSSL_CXET_HFT
     return WOLFSSL_CXET_HFT_PROFILE_VERSION;
-#else
-    return 0U;
-#endif
 }
+#endif
 
 #ifdef OPENSSL_EXTRA
 /* Signature deliberately does not depend on OPENSSL_VERSION_NUMBER. That macro
