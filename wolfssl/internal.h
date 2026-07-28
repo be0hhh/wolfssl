@@ -6057,6 +6057,9 @@ typedef struct BuildMsgArgs {
 #ifdef WOLFSSL_TLS13
     static WC_INLINE byte WriteDupTakeKeyUpdate(WriteDup* state)
     {
+        if (__atomic_load_n(&state->keyUpdateRespond, __ATOMIC_ACQUIRE) == 0)
+            return 0;
+
         return __atomic_exchange_n(&state->keyUpdateRespond, 0,
             __ATOMIC_ACQ_REL);
     }
