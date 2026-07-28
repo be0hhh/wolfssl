@@ -14267,10 +14267,14 @@ static int DoTls13KeyUpdate(WOLFSSL* ssl, const byte* input, word32* inOutIdx,
          * the one the limit applies to. The check is applied on the write side
          * in wolfssl_write_dup_do_tls13_work(). */
         if (ssl->dupWrite != NULL && ssl->dupSide == READ_DUP_SIDE) {
+#ifdef WOLFSSL_CXET_HFT
+            WriteDupPostKeyUpdate(ssl->dupWrite);
+#else
             if (wc_LockMutex(&ssl->dupWrite->dupMutex) != 0)
                 return BAD_MUTEX_E;
             ssl->dupWrite->keyUpdateRespond = 1;
             wc_UnLockMutex(&ssl->dupWrite->dupMutex);
+#endif
             ssl->keys.keyUpdateRespond = 0;
             return 0;
         }

@@ -3570,6 +3570,39 @@ if(WOLFSSL_FALLBACK_SCSV)
         )
 endif()
 
+add_option("WOLFSSL_CXET_HFT"
+    "Enable the CXET Linux x86-64 HFT transport profile (default: disabled)"
+    "no" "yes;no")
+if(WOLFSSL_CXET_HFT)
+    if(NOT CMAKE_SYSTEM_NAME STREQUAL "Linux")
+        message(FATAL_ERROR "WOLFSSL_CXET_HFT supports Linux only")
+    endif()
+    if(NOT CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|amd64|AMD64)$")
+        message(FATAL_ERROR "WOLFSSL_CXET_HFT supports x86-64 only")
+    endif()
+    if(NOT CMAKE_C_COMPILER_ID MATCHES "^(GNU|Clang)$")
+        message(FATAL_ERROR
+            "WOLFSSL_CXET_HFT requires GCC or Clang atomic builtins")
+    endif()
+    if(WOLFSSL_SINGLE_THREADED)
+        message(FATAL_ERROR
+            "WOLFSSL_CXET_HFT requires normal threaded lifetime handling")
+    endif()
+    if(WOLFSSL_DTLS OR WOLFSSL_DTLS13)
+        message(FATAL_ERROR "WOLFSSL_CXET_HFT does not support DTLS")
+    endif()
+    if(WOLFSSL_POSTAUTH)
+        message(FATAL_ERROR
+            "WOLFSSL_CXET_HFT does not support post-handshake authentication")
+    endif()
+    if(WOLFSSL_QUIC)
+        message(FATAL_ERROR "WOLFSSL_CXET_HFT does not support QUIC")
+    endif()
+
+    force_option(WOLFSSL_WRITEDUP "yes")
+    list(APPEND WOLFSSL_DEFINITIONS "-DWOLFSSL_CXET_HFT")
+endif()
+
 add_option("WOLFSSL_WRITEDUP"
     "Enable write duplication of SSL objects (default: disabled)"
     "no" "yes;no")

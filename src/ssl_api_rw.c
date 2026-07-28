@@ -255,6 +255,26 @@ static int wolfssl_write_dup_prepare(WOLFSSL* ssl)
 {
     int ret = 0;
 
+    #ifdef WOLFSSL_CXET_HFT
+    int dupErr = WriteDupLoadError(ssl->dupWrite);
+
+    #ifdef WOLFSSL_TLS13
+    if (IsAtLeastTLSv1_3(ssl->version)) {
+        ssl->keys.keyUpdateRespond |= WriteDupTakeKeyUpdate(ssl->dupWrite);
+    }
+    #endif
+
+    if (dupErr != 0) {
+        WOLFSSL_MSG("Write dup error from other side");
+        ssl->error = dupErr;
+        ret = WOLFSSL_FATAL_ERROR;
+    }
+    #ifdef WOLFSSL_TLS13
+    else {
+        ret = wolfssl_write_dup_do_tls13_work(ssl);
+    }
+    #endif
+    #else
     /* Lock ssl->dupWrite to gather what needs to be done. */
     if (wc_LockMutex(&ssl->dupWrite->dupMutex) != 0) {
         ret = BAD_MUTEX_E;
@@ -285,6 +305,7 @@ static int wolfssl_write_dup_prepare(WOLFSSL* ssl)
         }
         #endif /* WOLFSSL_TLS13 */
     }
+    #endif /* WOLFSSL_CXET_HFT */
 
     return ret;
 }

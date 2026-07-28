@@ -3342,6 +3342,27 @@
     #error "WRITE DUP and SECURE RENEGOTIATION cannot both be on"
 #endif
 
+#ifdef WOLFSSL_CXET_HFT
+    #if !defined(__GNUC__) && !defined(__clang__)
+        #error "WOLFSSL_CXET_HFT requires GCC or Clang atomic builtins"
+    #endif
+    #ifdef SINGLE_THREADED
+        #error "WOLFSSL_CXET_HFT requires threaded lifetime handling"
+    #endif
+    #ifndef HAVE_WRITE_DUP
+        #error "WOLFSSL_CXET_HFT requires HAVE_WRITE_DUP"
+    #endif
+    #if defined(WOLFSSL_DTLS) || defined(WOLFSSL_DTLS13)
+        #error "WOLFSSL_CXET_HFT does not support DTLS"
+    #endif
+    #ifdef WOLFSSL_POST_HANDSHAKE_AUTH
+        #error "WOLFSSL_CXET_HFT does not support post-handshake authentication"
+    #endif
+    #ifdef WOLFSSL_QUIC
+        #error "WOLFSSL_CXET_HFT does not support QUIC"
+    #endif
+#endif /* WOLFSSL_CXET_HFT */
+
 #ifdef WOLFSSL_SGX
     #ifdef _MSC_VER
         #define NO_RC4
