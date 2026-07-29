@@ -499,6 +499,12 @@ extern "C" {
 #cmakedefine HAVE_WRITE_DUP
 #undef WOLFSSL_CXET_HFT
 #cmakedefine WOLFSSL_CXET_HFT
+
+#undef WOLFSSL_AESNI
+#cmakedefine WOLFSSL_AESNI
+
+#undef WOLFSSL_SP_X86_64_ASM
+#cmakedefine WOLFSSL_SP_X86_64_ASM
 #undef ATOMIC_USER
 #cmakedefine ATOMIC_USER
 #undef WOLFSSL_USE_RWLOCK
