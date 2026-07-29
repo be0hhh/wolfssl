@@ -1042,6 +1042,12 @@ WOLFSSL* wolfSSL_write_dup(WOLFSSL* ssl)
 */
 int NotifyWriteSide(WOLFSSL* ssl, int err)
 {
+#ifdef WOLFSSL_CXET_HFT
+    WOLFSSL_ENTER("NotifyWriteSide");
+
+    WriteDupStoreError(ssl->dupWrite, err);
+    return 0;
+#else
     int ret;
 
     WOLFSSL_ENTER("NotifyWriteSide");
@@ -1053,6 +1059,7 @@ int NotifyWriteSide(WOLFSSL* ssl, int err)
     }
 
     return ret;
+#endif
 }
 
 
@@ -5897,6 +5904,13 @@ const char* wolfSSL_lib_version(void)
 {
     return LIBWOLFSSL_VERSION_STRING;
 }
+
+#ifdef WOLFSSL_CXET_HFT
+unsigned int wolfSSL_CXET_hft_profile_version(void)
+{
+    return WOLFSSL_CXET_HFT_PROFILE_VERSION;
+}
+#endif
 
 #ifdef OPENSSL_EXTRA
 #if defined(OPENSSL_VERSION_NUMBER) && OPENSSL_VERSION_NUMBER >= 0x10100000L

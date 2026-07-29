@@ -70,6 +70,16 @@ static int wolfSSL_write_internal(WOLFSSL* ssl, const void* data, size_t sz)
      * with handling async data and other edge case errors. */
     if (ssl->dupWrite != NULL && ssl->error == 0) {
         int dupErr = 0;   /* local copy */
+#ifdef WOLFSSL_CXET_HFT
+        dupErr = WriteDupLoadError(ssl->dupWrite);
+#ifdef WOLFSSL_TLS13
+        if (IsAtLeastTLSv1_3(ssl->version)) {
+            /* The read side publishes only a bounded KeyUpdate bit. */
+            ssl->keys.keyUpdateRespond |=
+                WriteDupTakeKeyUpdate(ssl->dupWrite);
+        }
+#endif /* WOLFSSL_TLS13 */
+#else
         /* Lock ssl->dupWrite to gather what needs to be done. */
         if (wc_LockMutex(&ssl->dupWrite->dupMutex) != 0)
             return BAD_MUTEX_E;
@@ -145,6 +155,7 @@ static int wolfSSL_write_internal(WOLFSSL* ssl, const void* data, size_t sz)
         }
 #endif /* WOLFSSL_TLS13 */
         wc_UnLockMutex(&ssl->dupWrite->dupMutex);
+#endif /* WOLFSSL_CXET_HFT */
 
         if (dupErr != 0) {
             WOLFSSL_MSG("Write dup error from other side");
