@@ -4,6 +4,8 @@
 build. It preserves the normal wolfSSL certificate, SNI, hostname-verification,
 record, cipher and socket-I/O behavior.
 
+Profile version 2 is based on wolfSSL 5.9.4 and retains TLS 1.2 support.
+
 The profile changes only the bounded read-to-write mailbox used after
 `wolfSSL_write_dup()`:
 
