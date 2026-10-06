@@ -110,7 +110,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v6
         with:
-          retention-days: 7
+          retention-days: 1
           name: async-logs
           path: |
             build-*/make-check.log

@@ -241,9 +241,10 @@ static int wolfssl_write_dup_do_tls13_work(WOLFSSL* ssl)
 #ifdef HAVE_WRITE_DUP
 /* Settle the write duplicate state before application data is sent.
  *
- * Takes over the work the read side delegated and surfaces any error it
- * recorded. Both are held under ssl->dupWrite->dupMutex, so they are collected
- * with the lock held and acted on once it has been released.
+ * Surfaces any error the read side recorded on every write. Delegated work is
+ * taken only with a cleared local error and no terminal flags. CXET reads the
+ * existing atomic error mailbox; other profiles collect shared state under
+ * ssl->dupWrite->dupMutex and act on it once the lock has been released.
  *
  * @param [in, out] ssl  SSL/TLS object of the write side.
  * @return  0 when the write may proceed.
@@ -254,15 +255,15 @@ static int wolfssl_write_dup_do_tls13_work(WOLFSSL* ssl)
 static int wolfssl_write_dup_prepare(WOLFSSL* ssl)
 {
     int ret = 0;
+    #ifdef WOLFSSL_TLS13
+    /* Retry errors keep their existing delegated-work gate, but never hide
+     * the read side's terminal error. Local terminal flags also fence work. */
+    int doWork = ssl->error == 0 && !ssl->options.isClosed &&
+            !ssl->options.closeNotify;
+    #endif
 
     #ifdef WOLFSSL_CXET_HFT
     int dupErr = WriteDupLoadError(ssl->dupWrite);
-
-    #ifdef WOLFSSL_TLS13
-    if (IsAtLeastTLSv1_3(ssl->version)) {
-        ssl->keys.keyUpdateRespond |= WriteDupTakeKeyUpdate(ssl->dupWrite);
-    }
-    #endif
 
     if (dupErr != 0) {
         WOLFSSL_MSG("Write dup error from other side");
@@ -270,7 +271,10 @@ static int wolfssl_write_dup_prepare(WOLFSSL* ssl)
         ret = WOLFSSL_FATAL_ERROR;
     }
     #ifdef WOLFSSL_TLS13
-    else {
+    else if (doWork) {
+        if (IsAtLeastTLSv1_3(ssl->version)) {
+            ssl->keys.keyUpdateRespond |= WriteDupTakeKeyUpdate(ssl->dupWrite);
+        }
         ret = wolfssl_write_dup_do_tls13_work(ssl);
     }
     #endif
@@ -283,7 +287,9 @@ static int wolfssl_write_dup_prepare(WOLFSSL* ssl)
         int dupErr = ssl->dupWrite->dupErr;   /* local copy */
 
         #ifdef WOLFSSL_TLS13
-        ret = wolfssl_write_dup_take_tls13_work(ssl);
+        if (dupErr == 0 && doWork) {
+            ret = wolfssl_write_dup_take_tls13_work(ssl);
+        }
         #endif /* WOLFSSL_TLS13 */
         wc_UnLockMutex(&ssl->dupWrite->dupMutex);
 
@@ -299,7 +305,7 @@ static int wolfssl_write_dup_prepare(WOLFSSL* ssl)
             ret = WOLFSSL_FATAL_ERROR;
         }
         #ifdef WOLFSSL_TLS13
-        else {
+        else if (doWork) {
             /* Do the work delegated by the read side. */
             ret = wolfssl_write_dup_do_tls13_work(ssl);
         }
@@ -353,9 +359,9 @@ static int wolfSSL_write_internal(WOLFSSL* ssl, const void* data, size_t sz)
         WOLFSSL_MSG("Read dup side cannot write");
         ret = WRITE_DUP_WRITE_E;
     }
-    /* Only enter special dupWrite logic when error is cleared. This will help
-     * with handling async data and other edge case errors. */
-    if ((ret == 0) && (ssl->dupWrite != NULL) && (ssl->error == 0)) {
+    /* Check the terminal mailbox on every write, including WANT_WRITE retries.
+     * The prepare helper still gates delegated work on a cleared local error. */
+    if ((ret == 0) && (ssl->dupWrite != NULL)) {
         ret = wolfssl_write_dup_prepare(ssl);
     }
     #endif

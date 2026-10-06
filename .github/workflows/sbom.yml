@@ -1057,7 +1057,7 @@ jobs:
         # Diagnostic-only, short retention.  Kept separate so the
         # provenance bundle above stays slim for downstream consumers
         # who don't need to debug ptrace gaps.
-        if: always()
+        if: (failure() || cancelled())
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: bomsh-trace-diag-${{ github.sha }}
@@ -1065,7 +1065,7 @@ jobs:
             bomsh_raw_logfile.sha1
             _bomsh.conf
           if-no-files-found: warn
-          retention-days: 14
+          retention-days: 1
 
       - name: make clean removes all bomsh + sbom artefacts
         # Regression guard: if a future change adds an output to either

@@ -337,10 +337,10 @@ jobs:
         run: ./tools/renode/docker-test.sh "SIGN=RSAPSS4096 WOLFBOOT_SMALL_STACK=1"
 
       - name: Upload Output Dir
-        if: always()
+        if: (failure() || cancelled())
         uses: actions/upload-artifact@v6
         with:
-          retention-days: 7
+          retention-days: 1
           name: renode-multimem-smallstack-results
           path: wolfboot/test_results/
 
@@ -446,10 +446,10 @@ jobs:
         run: ./tools/renode/docker-test.sh "SIGN=RSAPSS4096 WOLFBOOT_SMALL_STACK=1 SPMATH=0"
 
       - name: Upload Output Dir
-        if: always()
+        if: (failure() || cancelled())
         uses: actions/upload-artifact@v6
         with:
-          retention-days: 7
+          retention-days: 1
           name: renode-multimem-smallstack-fastmath-results
           path: wolfboot/test_results/
 
@@ -555,9 +555,9 @@ jobs:
         run: ./tools/renode/docker-test.sh "SIGN=RSAPSS4096 WOLFBOOT_SMALL_STACK=1 NO_ASM=1"
 
       - name: Upload Output Dir
-        if: always()
+        if: (failure() || cancelled())
         uses: actions/upload-artifact@v6
         with:
-          retention-days: 7
+          retention-days: 1
           name: renode-multimem-smallstack-noasm-results
           path: wolfboot/test_results/

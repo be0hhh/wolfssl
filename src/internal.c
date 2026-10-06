@@ -29474,6 +29474,12 @@ int SendData(WOLFSSL* ssl, const void* data, size_t sz)
 #endif
     int error = ssl->error;
 
+    /* A terminal TLS state must not clear a retry error or flush pending data. */
+    if (ssl->options.isClosed || ssl->options.closeNotify) {
+        ssl->error = ssl->options.closeNotify ? ZERO_RETURN : FATAL_ERROR;
+        return WOLFSSL_FATAL_ERROR;
+    }
+
     if (sz > INT_MAX) {
         WOLFSSL_MSG("SendData sz overflow");
         return WOLFSSL_FATAL_ERROR;

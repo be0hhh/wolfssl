@@ -139,4 +139,4 @@ jobs:
         with:
           name: zephyr-client-test-logs
           path: logs.zip
-          retention-days: 5
+          retention-days: 1

@@ -92,7 +92,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v6
         with:
-          retention-days: 7
+          retention-days: 1
           name: rtl8735b-logs
           path: |
             build-*/config.log

@@ -82,7 +82,7 @@ jobs:
         with:
           name: zephyr-4.x-${{ matrix.zephyr-ref }}-${{ matrix.sample }}-${{ strategy.job-index }}
           path: .github/scripts/zephyr-4.x/logs/
-          retention-days: 5
+          retention-days: 1
           if-no-files-found: ignore
 
       # Stage Membrowse artifacts only for the cells we want to track on the
@@ -167,5 +167,5 @@ jobs:
         with:
           name: zephyr-4.x-condvar-${{ matrix.zephyr-ref }}-${{ matrix.crypto-only }}-${{ strategy.job-index }}
           path: .github/scripts/zephyr-4.x/logs/
-          retention-days: 5
+          retention-days: 1
           if-no-files-found: ignore
